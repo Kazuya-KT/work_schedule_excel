@@ -1,0 +1,50 @@
+#https://qiita.com/phper_sugiyama/items/654f7a9171ae5ccf3e83
+
+version: "3"
+
+services:
+  php:
+    build: ./php
+    volumes:
+      - ./php:/var/www
+      - ./php/log/xdebug:/var/log/xdebug
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80
+    volumes:
+      - ./php:/var/www
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: work_schedule_excel
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+      TZ: "Asia/Tokyo"
+    command: mysqld --character-set-server=utf8mb4 --collation-server=utf8mb4_general_ci
+    volumes:
+      - ./mysql/conf:/etc/mysql/conf.d/
+      - ./mysql/lib:/var/lib/mysql
+      - ./mysql/sql:/docker-entrypoint-initdb.d
+    ports:
+      - 3306:3306
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:4.7
+    environment:
+      - PMA_ARBITRARY=1
+      - PMA_HOST=mysql
+      - PMA_USER=root
+      - PMA_PASSWORD=password
+    ports:
+      - 8080:80
+    links:
+      - mysql
+    volumes:
+      - ./phpmyadmin/sessions:/sessions
